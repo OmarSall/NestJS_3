@@ -19,3 +19,10 @@ model Article {
   title   String
   content String?
 }
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  isCompleted Boolean @default(false)
+}
