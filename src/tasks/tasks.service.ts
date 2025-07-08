@@ -1,6 +1,7 @@
 import {Injectable, NotFoundException} from '@nestjs/common';
 import {PrismaService} from '../database/prisma.service';
 import {TasksDto} from './tasks.dto';
+import {UpdateTaskDto} from './update-task.dto';
 import {Prisma} from '@prisma/client';
 import {PrismaError} from "../database/prisma-error.enum";
 
@@ -50,7 +51,7 @@ export class TasksService {
         }
     }
 
-    async update(id: number, task: TasksDto) {
+    async update(id: number, task: UpdateTaskDto) {
         try {
             return await this.prismaService.task.update({
                 data: {
