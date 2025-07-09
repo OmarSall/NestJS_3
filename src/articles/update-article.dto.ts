@@ -1,17 +1,14 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { CanBeUndefined } from '../utilities/can-be-undefined';
 
-export class UpdateTaskDto {
-  @IsOptional()
-  @IsNotEmpty()
+export class UpdateArticleDto {
   @IsString()
-  title?: string;
-
-  @IsOptional()
   @IsNotEmpty()
-  @IsString()
-  description?: string;
+  @IsOptional()
+  content?: string | null;
 
+  @IsString()
+  @IsNotEmpty()
   @CanBeUndefined()
-  isCompleted?: boolean;
+  title?: string;
 }
