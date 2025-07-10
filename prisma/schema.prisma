@@ -27,3 +27,10 @@ model Task {
   description String
   isCompleted Boolean @default(false)
 }
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  price     Float
+  isInStock Boolean
+}
