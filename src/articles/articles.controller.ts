@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { ParseIntPipe } from '@nestjs/common';
-import { CreateArticleDto } from './create-article.dto';
-import { UpdateArticleDto } from './update-article.dto';
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
 
 @Controller('articles')
 export class ArticleController {

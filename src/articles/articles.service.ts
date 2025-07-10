@@ -1,20 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ArticleNotFoundException } from './article-not-found.exception';
-import { ArticleDto } from './articles.dto';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
 import { PrismaError } from '../database/prisma-error.enum';
-import { CreateArticleDto } from './create-article.dto';
-import {UpdateArticleDto} from "./update-article.dto";
+import { CreateArticleDto } from './dto/create-article.dto';
+import { UpdateArticleDto } from './dto/update-article.dto';
+import { SlugNotUniqueException } from './slug-not-unique';
 
 @Injectable()
 export class ArticlesService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  create(article: CreateArticleDto) {
-    return this.prismaService.article.create({
-      data: article,
-    });
+  async create(article: CreateArticleDto) {
+    try {
+      return await this.prismaService.article.create({
+        data: article,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PrismaError.UniqueConstraintViolated
+      ) {
+        throw new SlugNotUniqueException(article.urlSlug);
+      }
+      throw error;
+    }
   }
 
   getAll() {
@@ -63,11 +73,14 @@ export class ArticlesService {
         },
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code == PrismaError.RecordDoesNotExist
-      ) {
-        throw new NotFoundException();
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+        throw error;
+      }
+      if (error.code === PrismaError.RecordDoesNotExist) {
+        throw new ArticleNotFoundException(id);
+      }
+      if (error.code === PrismaError.UniqueConstraintViolated) {
+        throw new SlugNotUniqueException(article.urlSlug);
       }
       throw error;
     }
