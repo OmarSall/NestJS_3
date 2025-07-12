@@ -13,6 +13,8 @@ import { AuthenticationModule } from './authentication/authentication.module';
     ConfigModule.forRoot({
       validationSchema: Joi.object({
         DATABASE_URL: Joi.string().required(),
+        JWT_SECRET: Joi.string().required(),
+        JWT_EXPIRES: Joi.number().required(),
       }),
     }),
     ArticlesModule,
