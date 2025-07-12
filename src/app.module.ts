@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TasksModule } from './tasks/tasks.module';
 import * as Joi from 'joi';
 import { ProductsModule } from './products/products.module';
+import { AuthenticationModule } from './authentication/authentication.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ProductsModule } from './products/products.module';
     ArticlesModule,
     TasksModule,
     ProductsModule,
+    AuthenticationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -32,7 +32,10 @@ export class ProductsController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() product: UpdateProductDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() product: UpdateProductDto,
+  ) {
     return this.service.update(id, product);
   }
 
