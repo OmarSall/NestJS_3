@@ -3,7 +3,7 @@ import { UsersService } from '../users/users.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { hash, compare } from 'bcrypt';
 import { WrongCredentialsException } from './wrong-credentials.exception';
-import { LogInDto } from '../users/log-in.dto';
+import { LogInDto } from './dto/log-in.dto';
 import { TokenPayload } from './token-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
