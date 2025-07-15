@@ -56,9 +56,18 @@ export class AuthenticationService {
 
   getCookieWithJwtToken(userId: number) {
     const payload: TokenPayload = { userId };
-    const token = this.jwtService.sign(payload);
+    const expiresIn = Number(this.configService.get('JWT_EXPIRES'));
+    const token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn,
+    });
 
-    return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${
-      this.configService.get('JWT_EXPIRES')}`;
+    return `Authentication=${token}; HttpOnly; Path=/; Max-Age=${this.configService.get(
+      'JWT_EXPIRES',
+    )}`;
+  }
+
+  getCookieForLogOut() {
+    return 'Authentication=; HttpOnly; Path=/; Max-Age=0';
   }
 }

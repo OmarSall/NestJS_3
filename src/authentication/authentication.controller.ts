@@ -2,7 +2,7 @@ import { Controller, Body, Post, HttpCode, Res } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { LogInDto } from '../users/log-in.dto';
-import { response } from 'express';
+import { Response } from 'express';
 
 @Controller('authentication')
 export class AuthenticationController {
@@ -17,7 +17,7 @@ export class AuthenticationController {
   @Post('log-in')
   async logIn(
     @Body() logInData: LogInDto,
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) response: Response,
   ) {
     const user =
       await this.authenticationService.getAuthenticatedUser(logInData);
@@ -26,5 +26,12 @@ export class AuthenticationController {
     response.setHeader('Set-Cookie', cookie);
 
     response.send(user);
+  }
+
+  @HttpCode(200)
+  @Post('log-out')
+  logOut(@Res({ passthrough: true }) response: Response) {
+    const cookie = this.authenticationService.getCookieForLogOut();
+    response.setHeader('Set-Cookie', cookie);
   }
 }

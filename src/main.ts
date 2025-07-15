@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { hash, compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import * as cookieParser from 'cookie-parser';
 
 const secret = 'secret-string';
 
@@ -38,6 +39,7 @@ async function bootstrap() {
   console.log(isPasswordMatching); //true
 
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser());
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3000);
 }
