@@ -9,8 +9,5 @@ SET "isInStock" = CASE
   ELSE false
 END;
 
--- Make new column NOT NULL
-ALTER TABLE "Product" ALTER COLUMN "isInStock" SET NOT NULL;
-
 -- Drop old column
 ALTER TABLE "Product" DROP COLUMN "quantity";
