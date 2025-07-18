@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -17,5 +16,27 @@ datasource db {
 model Article {
   id      Int     @id @default(autoincrement())
   title   String
-  content String?
+  text    String?
+  urlSlug String  @unique
+}
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  isCompleted Boolean @default(false)
+}
+
+model Product {
+  id        Int     @id @default(autoincrement())
+  name      String
+  price     Float
+  isInStock Boolean
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  name     String
+  password String
 }
