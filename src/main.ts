@@ -2,33 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { hash, compare } from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
 import * as cookieParser from 'cookie-parser';
 import { ConfigService } from '@nestjs/config';
-
-const secret = 'secret-string';
-
-const twelveHours = 43200;
-
-const jwtSecret = new JwtService({
-  signOptions: {
-    expiresIn: twelveHours,
-  },
-});
-
-const dataToEncode = {
-  userId: 1,
-};
-
-const token = jwtSecret.sign(dataToEncode, {
-  secret,
-});
-console.log(token);
-
-const decodedData = jwtSecret.verify(token, {
-  secret,
-});
-console.log(decodedData.userId);
 
 async function bootstrap() {
   const passwordInPlainText = 'StrongPassword123!';
@@ -46,6 +21,7 @@ async function bootstrap() {
     origin: configService.get('FRONTEND_URL'),
     credentials: true,
   });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 
