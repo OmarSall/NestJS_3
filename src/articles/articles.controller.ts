@@ -13,6 +13,8 @@ import { ParseIntPipe } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { JwtAuthenticationGuard } from '../authentication/jwt-authentication.guard';
+import { ArticleResponseDto } from './dto/article-response.dto';
+import { TransformPlainToInstance } from 'class-transformer';
 
 @Controller('articles')
 export class ArticleController {
@@ -24,12 +26,16 @@ export class ArticleController {
     return this.articlesService.create(article);
   }
 
+  @UseGuards(JwtAuthenticationGuard)
   @Get()
+  @TransformPlainToInstance(ArticleResponseDto)
   getAll() {
     return this.articlesService.getAll();
   }
 
+  @UseGuards(JwtAuthenticationGuard)
   @Get(':id')
+  @TransformPlainToInstance(ArticleResponseDto)
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.articlesService.getById(id);
   }
