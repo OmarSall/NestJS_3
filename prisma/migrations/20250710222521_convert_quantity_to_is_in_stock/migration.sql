@@ -1,6 +1,6 @@
 -- Add new column
 ALTER TABLE "Product"
-    ADD COLUMN "isInStock" BOOLEAN NOT NULL DEFAULT false;
+    ADD COLUMN "isInStock" BOOLEAN DEFAULT false;
 
 -- Migrate data
 UPDATE "Product"
@@ -11,3 +11,4 @@ END;
 
 -- Drop old column
 ALTER TABLE "Product" DROP COLUMN "quantity";
+ALTER TABLE "Product" ALTER COLUMN "isInStock" SET NOT NULL;
