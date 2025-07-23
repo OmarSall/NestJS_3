@@ -15,6 +15,7 @@ import { AuthenticationModule } from './authentication/authentication.module';
         DATABASE_URL: Joi.string().required(),
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRES: Joi.number().required(),
+        FRONTEND_URL: Joi.string().required(),
       }),
     }),
     ArticlesModule,
