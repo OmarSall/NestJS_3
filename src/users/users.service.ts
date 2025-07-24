@@ -45,4 +45,11 @@ export class UsersService {
       throw error;
     }
   }
+
+  async updatePhoneNumber(userId: number, phoneNumber: string) {
+    return this.prismaService.user.update({
+      where: { id: userId },
+      data: { phoneNumber },
+    });
+  }
 }

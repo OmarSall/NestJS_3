@@ -23,6 +23,7 @@ export class AuthenticationService {
     return await this.usersService.create({
       name: signUpData.name,
       email: signUpData.email,
+      phoneNumber: signUpData.phoneNumber,
       password: hashedPassword,
     });
   }
