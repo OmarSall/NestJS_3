@@ -26,4 +26,6 @@ export class ArticleResponseDto implements Article {
   textLength: number;
 
   urlSlug: string;
+
+  authorId: number;
 }
