@@ -48,6 +48,7 @@ model User {
   addressId    Int?          @unique
   articles     Article[]
   ProfileImage ProfileImage?
+  books        Book[]        @relation("UserBooks")
 }
 
 model Address {
@@ -76,4 +77,10 @@ model Comment {
   content   String
   article   Article @relation(fields: [articleId], references: [id])
   articleId Int
+}
+
+model Book {
+  id      Int    @id @default(autoincrement())
+  title   String
+  authors User[] @relation("UserBooks")
 }

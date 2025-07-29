@@ -6,11 +6,12 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post,
+  Post, UseGuards,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
+import {JwtAuthenticationGuard} from "../authentication/jwt-authentication.guard";
 
 @Controller('comments')
 export class CommentsController {
@@ -27,11 +28,13 @@ export class CommentsController {
   }
 
   @Post()
+  @UseGuards(JwtAuthenticationGuard)
   create(@Body() comment: CreateCommentDto) {
     return this.commentsService.create(comment);
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthenticationGuard)
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() comment: UpdateCommentDto,
@@ -40,6 +43,7 @@ export class CommentsController {
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthenticationGuard)
   async delete(@Param('id', ParseIntPipe) id: number) {
     await this.commentsService.delete(id);
   }
