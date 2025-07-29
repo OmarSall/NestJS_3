@@ -18,6 +18,9 @@ export class CategoriesService {
       where: {
         id,
       },
+      include: {
+        articles: true,
+      },
     });
 
     if (!category) {

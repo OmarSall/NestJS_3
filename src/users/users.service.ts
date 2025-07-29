@@ -15,6 +15,7 @@ export class UsersService {
       },
       include: {
         address: true,
+        articles: true,
       },
     });
     if (!user) {
@@ -52,6 +53,7 @@ export class UsersService {
         },
         include: {
           address: true,
+          articles: true,
         },
       });
     } catch (error: unknown) {

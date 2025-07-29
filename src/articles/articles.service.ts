@@ -1,4 +1,8 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ArticleNotFoundException } from './article-not-found.exception';
 import { PrismaService } from '../database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -41,14 +45,10 @@ export class ArticlesService {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
         throw error;
       }
-      if (
-          error.code === PrismaError.RecordDoesNotExist
-      ) {
+      if (error.code === PrismaError.RecordDoesNotExist) {
         throw new BadRequestException('Wrong category id provided');
       }
-      if (
-          error.code === PrismaError.UniqueConstraintViolated
-      ) {
+      if (error.code === PrismaError.UniqueConstraintViolated) {
         throw new SlugNotUniqueException(article.urlSlug);
       }
       throw error;
@@ -63,6 +63,10 @@ export class ArticlesService {
     const article = await this.prismaService.article.findUnique({
       where: {
         id,
+      },
+      include: {
+        author: true,
+        categories: true,
       },
     });
     if (!article) {
