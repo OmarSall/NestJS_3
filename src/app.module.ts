@@ -9,6 +9,7 @@ import { ProductsModule } from './products/products.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProfileImageModule } from './profile-image/profile-image.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ProfileImageModule } from './profile-image/profile-image.module';
     AuthenticationModule,
     CategoriesModule,
     ProfileImageModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
