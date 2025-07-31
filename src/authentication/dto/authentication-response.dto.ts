@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { Address, User } from '@prisma/client';
 import { Exclude, Transform } from 'class-transformer';
 
 export class AuthenticationResponseDto implements User {
@@ -20,4 +20,8 @@ export class AuthenticationResponseDto implements User {
     return `${'*'.repeat(numberLength - 3)}${visiblePart}`;
   })
   phoneNumber: string | null;
+
+  addressId: number | null;
+
+  address?: Address;
 }

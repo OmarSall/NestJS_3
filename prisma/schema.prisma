@@ -14,10 +14,14 @@ datasource db {
 }
 
 model Article {
-  id      Int     @id @default(autoincrement())
-  title   String
-  text    String?
-  urlSlug String  @unique
+  id         Int        @id @default(autoincrement())
+  title      String
+  text       String?
+  urlSlug    String     @unique
+  author     User?      @relation(fields: [authorId], references: [id])
+  authorId   Int?
+  categories Category[]
+  comments   Comment[]
 }
 
 model Task {
@@ -35,9 +39,48 @@ model Product {
 }
 
 model User {
-  id          Int     @id @default(autoincrement())
-  email       String  @unique
-  name        String
-  password    String
-  phoneNumber String?
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  name         String
+  password     String
+  phoneNumber  String?
+  address      Address?      @relation(fields: [addressId], references: [id])
+  addressId    Int?          @unique
+  articles     Article[]
+  ProfileImage ProfileImage?
+  books        Book[]        @relation("UserBooks")
+}
+
+model Address {
+  id      Int    @id @default(autoincrement())
+  street  String
+  city    String
+  country String
+  user    User?
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  articles Article[]
+}
+
+model ProfileImage {
+  id     Int    @id @default(autoincrement())
+  url    String
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int    @unique
+}
+
+model Comment {
+  id        Int     @id @default(autoincrement())
+  content   String
+  article   Article @relation(fields: [articleId], references: [id])
+  articleId Int
+}
+
+model Book {
+  id      Int    @id @default(autoincrement())
+  title   String
+  authors User[] @relation("UserBooks")
 }

@@ -7,6 +7,10 @@ import { TasksModule } from './tasks/tasks.module';
 import * as Joi from 'joi';
 import { ProductsModule } from './products/products.module';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ProfileImageModule } from './profile-image/profile-image.module';
+import { CommentsModule } from './comments/comments.module';
+import {BooksModule} from "./books/books.module";
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { AuthenticationModule } from './authentication/authentication.module';
     TasksModule,
     ProductsModule,
     AuthenticationModule,
+    CategoriesModule,
+    ProfileImageModule,
+    CommentsModule,
+    BooksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

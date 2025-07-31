@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Expose, Transform } from 'class-transformer';
+import { CanBeUndefined } from '../../utilities/can-be-undefined';
 
 export class CreateArticleDto {
   @IsString()
@@ -22,4 +23,8 @@ export class CreateArticleDto {
     return title.toLowerCase().replaceAll(' ', '-');
   })
   urlSlug: string;
+
+  @CanBeUndefined()
+  @IsNumber({}, { each: true })
+  categoryIds?: number[];
 }
