@@ -117,4 +117,19 @@ export class ArticlesService {
       throw error;
     }
   }
+
+  deleteMultipleArticles(ids: number[]) {
+    return this.prismaService.$transaction(async (transactionClient) => {
+      const deleteResponse = await this.prismaService.article.deleteMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+      });
+      if (deleteResponse.count !== ids.length) {
+        throw new NotFoundException('One of the articles count not be deleted');
+      }
+    });
+  }
 }

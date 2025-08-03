@@ -71,4 +71,14 @@ export class UsersService {
       data: { phoneNumber },
     });
   }
+
+  deleteMultipleArticles(ids: number[]) {
+    return this.prismaService.user.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+  }
 }
