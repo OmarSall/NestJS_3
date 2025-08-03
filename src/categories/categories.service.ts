@@ -111,4 +111,8 @@ export class CategoriesService {
       });
     });
   }
+
+  async mergeCategories() {
+
+  }
 }

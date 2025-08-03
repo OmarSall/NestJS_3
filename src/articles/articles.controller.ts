@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { ParseIntPipe } from '@nestjs/common';
@@ -53,5 +54,30 @@ export class ArticleController {
     @Body() article: UpdateArticleDto,
   ) {
     return this.articlesService.update(id, article);
+  }
+
+  @Patch(':id/upvote')
+  upvote(@Param('id', ParseIntPipe) id: number) {
+    return this.articlesService.upvote(id);
+  }
+
+  @Patch(':id/downvote')
+  downvote(@Param('id', ParseIntPipe) id: number) {
+    return this.articlesService.downvote(id);
+  }
+
+  @Delete()
+  deleteLowUpvoteArticles(
+    @Query('upvotesFewerThan', ParseIntPipe) threshold: number,
+  ) {
+    return this.articlesService.deleteArticlesWithLowUpVotes(threshold);
+  }
+
+  @Patch()
+  reassignArticles(
+    @Query('previousAuthor', ParseIntPipe) previousAuthor: number,
+    @Query('newAuthor', ParseIntPipe) newAuthor: number,
+  ) {
+    return this.articlesService.reassignArticles(previousAuthor, newAuthor);
   }
 }

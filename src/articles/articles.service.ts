@@ -132,4 +132,78 @@ export class ArticlesService {
       }
     });
   }
+
+  async upvote(id: number) {
+    return this.prismaService.article.update({
+      where: {
+        id,
+      },
+      data: {
+        upvotes: {
+          increment: 1,
+        },
+      },
+    });
+  }
+
+  async downvote(id: number) {
+    const article = await this.prismaService.article.findUnique({
+      where: { id },
+    });
+    if (!article) {
+      throw new NotFoundException(`Article with id ${id} not found`);
+    }
+    if (article.upvotes <= 0) {
+      throw new BadRequestException('Upvotes cannot go below 0');
+    }
+    return this.prismaService.article.update({
+      where: {
+        id,
+      },
+      data: {
+        upvotes: {
+          decrement: 1,
+        },
+      },
+    });
+  }
+
+  async deleteArticlesWithLowUpVotes(threshold: number) {
+    return this.prismaService.$transaction(async (transactionClient) => {
+      const articlesToDelete = await transactionClient.article.findMany({
+        where: {
+          upvotes: {
+            lt: threshold,
+          },
+        },
+      });
+      if (articlesToDelete.length === 0) {
+        throw new BadRequestException(
+          'No articles found with upvotes < ' + threshold,
+        );
+      }
+
+      await transactionClient.article.deleteMany({
+        where: {
+          id: {
+            in: articlesToDelete.map((article) => article.id),
+          },
+        },
+      });
+      return {
+        deletedCount: articlesToDelete.length,
+      };
+    });
+  }
+
+  async reassignArticles(previousAuthor: number, newAuthor: number) {
+    return this.prismaService.article.updateMany({
+      where: {
+        authorId: previousAuthor,
+      },
+      data: {
+        authorId: newAuthor,
+      },
+    });
+  }
 }
