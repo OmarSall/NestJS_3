@@ -113,6 +113,46 @@ export class CategoriesService {
   }
 
   async mergeCategories() {
+    return this.prismaService.$transaction(async (prismClient) => {
+      const categories = await prismClient.category.findMany({
+        orderBy: { id: 'asc' },
+      });
+      const grouped = categories.reduce(
+        (acc, cat) => {
+          acc[cat.name] = acc[cat.name] || [];
+          acc[cat.name].push(cat);
+          return acc;
+        },
+        {} as Record<string, typeof categories>,
+      );
 
+      for (const group of Object.values(grouped)) {
+        if (group.length > 1) {
+          const [older, ...newer] = group;
+          for (const cat of newer) {
+            const articles = await prismClient.article.findMany({
+              where: {
+                categories: {
+                  some: { id: cat.id },
+                },
+              },
+            });
+
+            for (const article of articles) {
+              await prismClient.article.update({
+                where: { id: article.id },
+                data: {
+                  categories: {
+                    disconnect: { id: cat.id },
+                    connect: { id: older.id },
+                  },
+                },
+              });
+            }
+            await prismClient.category.delete({ where: { id: cat.id } });
+          }
+        }
+      }
+    });
   }
 }
