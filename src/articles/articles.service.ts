@@ -147,25 +147,23 @@ export class ArticlesService {
   }
 
   async downvote(id: number) {
-    const article = await this.prismaService.article.findUnique({
-      where: { id },
-    });
-    if (!article) {
-      throw new NotFoundException(`Article with id ${id} not found`);
-    }
-    if (article.upvotes <= 0) {
-      throw new BadRequestException('Upvotes cannot go below 0');
-    }
-    return this.prismaService.article.update({
-      where: {
-        id,
-      },
-      data: {
-        upvotes: {
-          decrement: 1,
+    try {
+      return await this.prismaService.article.update({
+        where: {
+          id,
+          upvotes: {
+            gt: 0,
+          },
         },
-      },
-    });
+        data: {
+          upvotes: {
+            decrement: 1,
+          },
+        },
+      });
+    } catch {
+      throw new BadRequestException('Article not found or upvotes already 0');
+    }
   }
 
   async deleteArticlesWithLowUpVotes(threshold: number) {
