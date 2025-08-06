@@ -7,6 +7,7 @@ import { PrismaService } from '../database/prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { PrismaError } from '../database/prisma-error.enum';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class BooksService {
@@ -41,9 +42,14 @@ export class BooksService {
         },
         include: { authors: true },
       });
-    } catch (error) {
-      if (error.code === PrismaError.RecordDoesNotExist)
+    } catch (error: unknown) {
+      const prismaError = error as Prisma.PrismaClientKnownRequestError;
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        prismaError.code === PrismaError.RecordDoesNotExist
+      ) {
         throw new BadRequestException('Invalid author ID');
+      }
       throw error;
     }
   }
@@ -57,8 +63,9 @@ export class BooksService {
         },
         include: { authors: true },
       });
-    } catch (error) {
-      if (error.code === PrismaError.RecordDoesNotExist)
+    } catch (error: unknown) {
+      const prismaError = error as Prisma.PrismaClientKnownRequestError;
+      if (prismaError.code === PrismaError.RecordDoesNotExist)
         throw new NotFoundException();
       throw error;
     }
@@ -69,8 +76,9 @@ export class BooksService {
       return await this.prisma.book.delete({
         where: { id },
       });
-    } catch (error) {
-      if (error.code === PrismaError.RecordDoesNotExist)
+    } catch (error: unknown) {
+      const prismaError = error as Prisma.PrismaClientKnownRequestError;
+      if (prismaError.code === PrismaError.RecordDoesNotExist)
         throw new NotFoundException();
       throw error;
     }

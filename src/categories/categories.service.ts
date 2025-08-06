@@ -4,10 +4,14 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PrismaError } from '../database/prisma-error.enum';
 import { Prisma } from '@prisma/client';
+import { ArticlesService } from '../articles/articles.service';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly articlesService: ArticlesService,
+  ) {}
 
   getAll() {
     return this.prismaService.category.findMany();
@@ -74,5 +78,81 @@ export class CategoriesService {
       }
       throw error;
     }
+  }
+
+  async deleteCategoryWithArticles(categoryId: number) {
+    return this.prismaService.$transaction(async (transactionClient) => {
+      const category = await transactionClient.category.findUnique({
+        where: {
+          id: categoryId,
+        },
+        include: {
+          articles: true,
+        },
+      });
+      if (!category) {
+        throw new NotFoundException();
+      }
+
+      const articleIds = category.articles.map((article) => article.id);
+
+      await transactionClient.article.deleteMany({
+        where: {
+          id: {
+            in: articleIds,
+          },
+        },
+      });
+
+      await transactionClient.category.delete({
+        where: {
+          id: categoryId,
+        },
+      });
+    });
+  }
+
+  async mergeCategories() {
+    return this.prismaService.$transaction(async (prismClient) => {
+      const categories = await prismClient.category.findMany({
+        orderBy: { id: 'asc' },
+      });
+      const grouped = categories.reduce(
+        (acc, cat) => {
+          acc[cat.name] = acc[cat.name] || [];
+          acc[cat.name].push(cat);
+          return acc;
+        },
+        {} as Record<string, typeof categories>,
+      );
+
+      for (const group of Object.values(grouped)) {
+        if (group.length > 1) {
+          const [older, ...newer] = group;
+          for (const cat of newer) {
+            const articles = await prismClient.article.findMany({
+              where: {
+                categories: {
+                  some: { id: cat.id },
+                },
+              },
+            });
+
+            for (const article of articles) {
+              await prismClient.article.update({
+                where: { id: article.id },
+                data: {
+                  categories: {
+                    disconnect: { id: cat.id },
+                    connect: { id: older.id },
+                  },
+                },
+              });
+            }
+            await prismClient.category.delete({ where: { id: cat.id } });
+          }
+        }
+      }
+    });
   }
 }

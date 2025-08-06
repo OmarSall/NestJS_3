@@ -71,4 +71,40 @@ export class UsersService {
       data: { phoneNumber },
     });
   }
+
+  deleteMultipleArticles(ids: number[]) {
+    return this.prismaService.user.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+  }
+
+  async deleteUserAndHandleArticles(userId: number, newAuthorId?: number) {
+    return this.prismaService.$transaction(async (prismaClient) => {
+      if (newAuthorId) {
+        await prismaClient.article.updateMany({
+          where: {
+            authorId: userId,
+          },
+          data: {
+            authorId: newAuthorId,
+          },
+        });
+      } else {
+        await prismaClient.article.deleteMany({
+          where: {
+            authorId: userId,
+          },
+        });
+      }
+      return prismaClient.user.delete({
+        where: {
+          id: userId,
+        },
+      });
+    });
+  }
 }

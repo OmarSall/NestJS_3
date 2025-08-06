@@ -26,6 +26,6 @@ export class ArticleResponseDto implements Article {
   textLength: number;
 
   urlSlug: string;
-
+  upvotes: number;
   authorId: number;
 }

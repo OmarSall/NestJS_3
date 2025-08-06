@@ -45,6 +45,12 @@ export class CategoriesController {
   @Delete(':id')
   @UseGuards(JwtAuthenticationGuard)
   async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.categoriesService.delete(id);
+    await this.categoriesService.deleteCategoryWithArticles(id);
+  }
+
+  @Patch()
+  @UseGuards(JwtAuthenticationGuard)
+  mergeCategories() {
+    return this.categoriesService.mergeCategories();
   }
 }

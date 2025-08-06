@@ -10,7 +10,7 @@ import { AuthenticationModule } from './authentication/authentication.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProfileImageModule } from './profile-image/profile-image.module';
 import { CommentsModule } from './comments/comments.module';
-import {BooksModule} from "./books/books.module";
+import { BooksModule } from './books/books.module';
 
 @Module({
   imports: [

@@ -117,4 +117,91 @@ export class ArticlesService {
       throw error;
     }
   }
+
+  deleteMultipleArticles(ids: number[]) {
+    return this.prismaService.$transaction(async (transactionClient) => {
+      const deleteResponse = await this.prismaService.article.deleteMany({
+        where: {
+          id: {
+            in: ids,
+          },
+        },
+      });
+      if (deleteResponse.count !== ids.length) {
+        throw new NotFoundException('One of the articles count not be deleted');
+      }
+    });
+  }
+
+  async upvote(id: number) {
+    return this.prismaService.article.update({
+      where: {
+        id,
+      },
+      data: {
+        upvotes: {
+          increment: 1,
+        },
+      },
+    });
+  }
+
+  async downvote(id: number) {
+    try {
+      return await this.prismaService.article.update({
+        where: {
+          id,
+          upvotes: {
+            gt: 0,
+          },
+        },
+        data: {
+          upvotes: {
+            decrement: 1,
+          },
+        },
+      });
+    } catch {
+      throw new BadRequestException('Article not found or upvotes already 0');
+    }
+  }
+
+  async deleteArticlesWithLowUpVotes(threshold: number) {
+    return this.prismaService.$transaction(async (transactionClient) => {
+      const articlesToDelete = await transactionClient.article.findMany({
+        where: {
+          upvotes: {
+            lt: threshold,
+          },
+        },
+      });
+      if (articlesToDelete.length === 0) {
+        throw new BadRequestException(
+          'No articles found with upvotes < ' + threshold,
+        );
+      }
+
+      await transactionClient.article.deleteMany({
+        where: {
+          id: {
+            in: articlesToDelete.map((article) => article.id),
+          },
+        },
+      });
+      return {
+        deletedCount: articlesToDelete.length,
+      };
+    });
+  }
+
+  async reassignArticles(previousAuthor: number, newAuthor: number) {
+    return this.prismaService.article.updateMany({
+      where: {
+        authorId: previousAuthor,
+      },
+      data: {
+        authorId: newAuthor,
+      },
+    });
+  }
 }
