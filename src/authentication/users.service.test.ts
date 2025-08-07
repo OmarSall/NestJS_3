@@ -103,4 +103,50 @@ describe('The UsersService', () => {
       });
     });
   });
+  describe('when the getByEmail function is called', () => {
+    describe('and the user with given email exists', () => {
+      let user: User;
+      beforeEach(() => {
+        user = {
+          id: 2,
+          email: 'john@smith.com',
+          name: 'John',
+          password: 'strongPassword123',
+          addressId: null,
+          phoneNumber: null,
+        };
+        findUniqueMock.mockResolvedValue(user);
+      });
+      it('should return the user', async () => {
+        const result = await usersService.getByEmail(user.email);
+        expect(result).toBe(user);
+        expect(findUniqueMock).toHaveBeenCalledWith({
+          where: { email: user.email },
+          include: {
+            address: true,
+            articles: true,
+          },
+        });
+      });
+    });
+    describe('and the user with given email does not exist', () => {
+      beforeEach(() => {
+        findUniqueMock.mockResolvedValue(undefined);
+      });
+      it('should throw the NotFoundException', async () => {
+        const email = 'nonexistent@example.com';
+
+        await expect(usersService.getByEmail(email)).rejects.toThrow(
+          NotFoundException,
+        );
+        expect(findUniqueMock).toHaveBeenCalledWith({
+          where: { email },
+          include: {
+            address: true,
+            articles: true,
+          },
+        });
+      });
+    });
+  });
 });

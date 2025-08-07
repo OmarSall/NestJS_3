@@ -1,7 +1,7 @@
 import { UsersService } from '../users/users.service';
 import { AuthenticationService } from './authentication.service';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule } from '@nestjs/config';
+import { JwtModule, JwtService } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { DatabaseModule } from '../database/database.module';
 import { UsersModule } from '../users/users.module';
@@ -9,14 +9,32 @@ import { User } from '@prisma/client';
 import { hash } from 'bcrypt';
 import { NotFoundException } from '@nestjs/common';
 import { WrongCredentialsException } from './wrong-credentials.exception';
+import { SignUpDto } from './dto/sign-up.dto';
 
 describe('The AuthenticationService', () => {
   let userData: User;
   let authenticationService: AuthenticationService;
   let password: string;
   let getByEmailMock: jest.Mock;
+  let createMock: jest.Mock<unknown, [SignUpDto]>;
+  let jwtService: JwtService;
+  let configService: ConfigService;
   beforeEach(async () => {
     getByEmailMock = jest.fn();
+    createMock = jest.fn<unknown, [SignUpDto]>();
+
+    jwtService = {
+      sign: jest.fn().mockReturnValue('mocked-jwt-token'),
+    } as unknown as JwtService;
+
+    configService = {
+      get: jest.fn((key: string) => {
+        if (key === 'JWT_EXPIRES') return '3600';
+        if (key === 'JWT_SECRET') return 'super-secret';
+        return null;
+      }),
+    } as unknown as ConfigService;
+
     password = 'strongPassword123';
     const hashedPassword = await hash(password, 10);
     userData = {
@@ -34,12 +52,21 @@ describe('The AuthenticationService', () => {
           provide: UsersService,
           useValue: {
             getByEmail: getByEmailMock,
+            create: createMock,
           },
+        },
+        {
+          provide: JwtService,
+          useValue: jwtService,
+        },
+        {
+          provide: ConfigService,
+          useValue: configService,
         },
       ],
       imports: [
         UsersModule,
-        await ConfigModule.forRoot(),
+        ConfigModule.forRoot(),
         JwtModule.register({
           secretOrPrivateKey: 'Secret key',
         }),
@@ -78,18 +105,67 @@ describe('The AuthenticationService', () => {
         expect(result).toBe(userData);
       });
     });
-    describe('and an invalid emaild is provided', () => {
+    describe('and an invalid email is provided', () => {
       beforeEach(() => {
         getByEmailMock.mockRejectedValue(new NotFoundException());
       });
-      it('should throw the BadRequestException', () => {
+      it('should throw WrongCredentialsException', () => {
         return expect(async () => {
           await authenticationService.getAuthenticatedUser({
-            email: 'john@smith.com',
+            email: 'invalid@smith.com',
             password,
           });
         }).rejects.toThrow(WrongCredentialsException);
       });
+    });
+  });
+  describe('when signUp method is called', () => {
+    it('should hash the password and call usersService.create with correct data', async () => {
+      const testUserDto: SignUpDto = {
+        name: 'John',
+        email: 'john@smith.com',
+        phoneNumber: '123456789',
+        password: 'strongPassword123',
+        address: {
+          city: 'City',
+          street: 'Street',
+          country: 'Country',
+        },
+      };
+
+      await authenticationService.signUp(testUserDto);
+
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: testUserDto.email,
+          name: testUserDto.name,
+          phoneNumber: testUserDto.phoneNumber,
+          address: testUserDto.address,
+          password: expect.any(String) as string,
+        }),
+      );
+      const passedPassword = (
+        createMock.mock.calls[0][0] as { password: string }
+      ).password;
+      expect(passedPassword).not.toBe(testUserDto.password);
+    });
+  });
+  describe('when getCookieWithJwtToken is  called', () => {
+    it('should return a properly formatted cookie with the JWT token', () => {
+      const userId = 42;
+
+      const result = authenticationService.getCookieWithJwtToken(userId);
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        { userId },
+        {
+          secret: 'super-secret',
+          expiresIn: 3600,
+        },
+      );
+
+      expect(result).toBe(
+        'Authentication=mocked-jwt-token; HttpOnly; Path=/; Max-Age=3600',
+      );
     });
   });
 });

@@ -43,7 +43,7 @@ export class AuthenticationService {
 
   private async getUserByEmail(email: string) {
     try {
-      return this.usersService.getByEmail(email);
+      return await this.usersService.getByEmail(email);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new WrongCredentialsException();
