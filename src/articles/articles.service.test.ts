@@ -11,6 +11,8 @@ describe('The ArticlesService', () => {
   let articlesService: ArticlesService;
   let prismaService: {
     article: {
+      update: jest.Mock;
+      delete: jest.Mock;
       create: jest.Mock;
       findMany: jest.Mock;
       findUnique: jest.Mock;
@@ -20,6 +22,8 @@ describe('The ArticlesService', () => {
   beforeEach(async () => {
     prismaService = {
       article: {
+        update: jest.fn(),
+        delete: jest.fn(),
         create: jest.fn(),
         findMany: jest.fn(),
         findUnique: jest.fn(),
@@ -128,6 +132,123 @@ describe('The ArticlesService', () => {
 
       expect(prismaService.article.findMany).toHaveBeenCalledWith();
       expect(result).toBe(articles);
+    });
+  });
+  describe('when the getById method is called', () => {
+    it('should return the article when found', async () => {
+      const article = {
+        id: 1,
+        title: 'Test',
+        author: {},
+        categories: [],
+      };
+
+      prismaService.article.findUnique.mockResolvedValue(article);
+
+      const result = await articlesService.getById(1);
+
+      expect(prismaService.article.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+        include: { author: true, categories: true },
+      });
+
+      expect(result).toBe(article);
+    });
+    it('should throw ArticleNotFoundException if not found', async () => {
+      prismaService.article.findUnique.mockResolvedValue(null);
+
+      await expect(articlesService.getById(999)).rejects.toThrow(
+        ArticleNotFoundException,
+      );
+    });
+  });
+  describe('when the delete method is called', () => {
+    it('should delete the article by id', async () => {
+      const articleId = 1;
+      const deletedArticle = {
+        id: articleId,
+      };
+      prismaService.article.delete.mockResolvedValue(deletedArticle);
+
+      const result = await articlesService.delete(articleId);
+
+      expect(prismaService.article.delete).toHaveBeenCalledWith({
+        where: {
+          id: articleId,
+        },
+      });
+      expect(result).toBe(deletedArticle);
+    });
+    it('should throw NotFoundException if article does not exist', async () => {
+      const articleId = 1;
+      const fakeError = {
+        code: PrismaError.RecordDoesNotExist,
+        message: 'Record does not exist',
+      };
+      Object.setPrototypeOf(
+        fakeError,
+        Prisma.PrismaClientKnownRequestError.prototype,
+      );
+      prismaService.article.delete.mockRejectedValue(fakeError);
+
+      await expect(articlesService.delete(articleId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+  describe('when the update method is called', () => {
+    it('should update the article by id', async () => {
+      const dto = {
+        title: 'Updated title',
+        urlSlug: 'updated-title',
+      };
+      const updated = { id: 1, ...dto };
+      prismaService.article.update.mockResolvedValue(updated);
+
+      const result = await articlesService.update(1, dto as any);
+
+      expect(prismaService.article.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { ...dto, id: undefined },
+      });
+
+      expect(result).toBe(updated);
+    });
+    it('should throw ArticleNotFoundException if article not found', async () => {
+      const fakeError = {
+        code: PrismaError.RecordDoesNotExist,
+        message: 'Record does not exist',
+      };
+
+      Object.setPrototypeOf(
+        fakeError,
+        Prisma.PrismaClientKnownRequestError.prototype,
+      );
+
+      prismaService.article.update.mockRejectedValue(fakeError);
+
+      await expect(articlesService.update(1, {} as any)).rejects.toThrow(
+        ArticleNotFoundException,
+      );
+    });
+    it('should throw SlugNotUniqueException if urlSlug is not unique', async () => {
+      const dto = { urlSlug: 'duplicate-slug' };
+
+      const fakeError = {
+        code: PrismaError.UniqueConstraintViolated,
+        message: 'Unique constraint',
+      };
+
+      Object.setPrototypeOf(
+        fakeError,
+        Prisma.PrismaClientKnownRequestError.prototype,
+      );
+
+      prismaService.article.update.mockRejectedValue(fakeError);
+
+      await expect(articlesService.update(1, dto as any)).rejects.toThrow(
+        SlugNotUniqueException,
+      );
     });
   });
 });
