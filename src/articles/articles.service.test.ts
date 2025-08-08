@@ -10,7 +10,9 @@ import { Prisma } from '@prisma/client';
 describe('The ArticlesService', () => {
   let articlesService: ArticlesService;
   let prismaService: {
+    $transaction: jest.Mock;
     article: {
+      deleteMany: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
       create: jest.Mock;
@@ -21,7 +23,9 @@ describe('The ArticlesService', () => {
 
   beforeEach(async () => {
     prismaService = {
+      $transaction: jest.fn(),
       article: {
+        deleteMany: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
         create: jest.fn(),
@@ -249,6 +253,34 @@ describe('The ArticlesService', () => {
       await expect(articlesService.update(1, dto as any)).rejects.toThrow(
         SlugNotUniqueException,
       );
+    });
+  });
+  describe('deleteMultipleArticles', () => {
+    it('should delete multiple articles in a transaction', async () => {
+      prismaService.$transaction.mockImplementation(async (callback) => {
+        return await callback(prismaService);
+      });
+
+      prismaService.article.deleteMany.mockResolvedValue({ count: 3 });
+
+      await expect(
+        articlesService.deleteMultipleArticles([1, 2, 3]),
+      ).resolves.toBeUndefined();
+
+      expect(prismaService.article.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: [1, 2, 3] } },
+      });
+    });
+    it('should throw NotFoundException if not all articles were deleted', async () => {
+      prismaService.$transaction.mockImplementation(async (callback) => {
+        return await callback(prismaService);
+      });
+
+      prismaService.article.deleteMany.mockResolvedValue({ count: 2 });
+
+      await expect(
+        articlesService.deleteMultipleArticles([1, 2, 3]),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });
