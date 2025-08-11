@@ -12,6 +12,7 @@ describe('The ArticlesService', () => {
   let prismaService: {
     $transaction: jest.Mock;
     article: {
+      updateMany: jest.Mock;
       deleteMany: jest.Mock;
       update: jest.Mock;
       delete: jest.Mock;
@@ -25,6 +26,7 @@ describe('The ArticlesService', () => {
     prismaService = {
       $transaction: jest.fn(),
       article: {
+        updateMany: jest.fn(),
         deleteMany: jest.fn(),
         update: jest.fn(),
         delete: jest.fn(),
@@ -255,7 +257,7 @@ describe('The ArticlesService', () => {
       );
     });
   });
-  describe('deleteMultipleArticles', () => {
+  describe('when the deleteMultipleArticles is called', () => {
     it('should delete multiple articles in a transaction', async () => {
       prismaService.$transaction.mockImplementation(async (callback) => {
         return await callback(prismaService);
@@ -281,6 +283,120 @@ describe('The ArticlesService', () => {
       await expect(
         articlesService.deleteMultipleArticles([1, 2, 3]),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+  describe('when the upvote method is called', () => {
+    it('should increment upvotes by 1', async () => {
+      const updatedArticle = {
+        id: 1,
+        upvotes: 6,
+      };
+      prismaService.article.update.mockResolvedValue(updatedArticle);
+
+      const result = await articlesService.upvote(1);
+
+      expect(prismaService.article.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { upvotes: { increment: 1 } },
+      });
+
+      expect(result).toBe(updatedArticle);
+    });
+  });
+  describe('when the downvote method is called', () => {
+    it('should decrement upvotes by 1 if upvotes > 0', async () => {
+      const updatedArticle = {
+        id: 1,
+        upvotes: 4,
+      };
+      prismaService.article.update.mockResolvedValue(updatedArticle);
+
+      const result = await articlesService.downvote(1);
+
+      expect(prismaService.article.update).toHaveBeenCalledWith({
+        where: {
+          id: 1,
+          upvotes: {
+            gt: 0,
+          },
+        },
+
+        data: {
+          upvotes: {
+            decrement: 1,
+          },
+        },
+      });
+
+      expect(result).toBe(updatedArticle);
+    });
+    it('should throw BadRequestException if update fails', async () => {
+      prismaService.article.update.mockRejectedValue(new Error('DB error'));
+
+      await expect(articlesService.downvote(1)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+  describe('when the deleteArticlesWithLowUpVotes is called', () => {
+    it('should delete all articles with upvotes below threshold', async () => {
+      const threshold = 5;
+      const articles = [{ id: 1 }, { id: 2 }];
+
+      prismaService.$transaction.mockImplementation(async (callback) => {
+        prismaService.article.findMany.mockResolvedValue(articles);
+        prismaService.article.deleteMany.mockResolvedValue({ count: 2 });
+        return await callback(prismaService);
+      });
+
+      const result =
+        await articlesService.deleteArticlesWithLowUpVotes(threshold);
+
+      expect(prismaService.article.findMany).toHaveBeenCalledWith({
+        where: {
+          upvotes: {
+            lt: threshold,
+          },
+        },
+      });
+
+      expect(prismaService.article.deleteMany).toHaveBeenCalledWith({
+        where: {
+          id: {
+            in: [1, 2],
+          },
+        },
+      });
+
+      expect(result).toEqual({ deletedCount: 2 });
+    });
+    it('should throw BadRequestException if no articles found', async () => {
+      prismaService.$transaction.mockImplementation(async (callback) => {
+        prismaService.article.findMany.mockResolvedValue([]);
+        return await callback(prismaService);
+      });
+
+      await expect(
+        articlesService.deleteArticlesWithLowUpVotes(5),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+  describe('when the reassignArticles method is called', () => {
+    describe('reassignArticles', () => {
+      it('should update authorId for multiple articles', async () => {
+        const response = { count: 3 };
+
+        prismaService.article.updateMany.mockResolvedValue(response);
+
+        const result = await articlesService.reassignArticles(10, 20);
+
+        expect(prismaService.article.updateMany).toHaveBeenCalledWith({
+          where: { authorId: 10 },
+          data: { authorId: 20 },
+        });
+
+        expect(result).toBe(response);
+      });
     });
   });
 });
