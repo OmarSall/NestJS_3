@@ -90,16 +90,13 @@ describe('The ArticlesService', () => {
         urlSlug: 'duplicate-slug',
       };
 
-      const fakeError = {
-        code: 'P2002',
-        message: 'some message',
-      };
-
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+      prismaService.article.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: PrismaError.UniqueConstraintViolated,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-      prismaService.article.create.mockRejectedValue(fakeError);
+
       await expect(articlesService.create(dto as any, 123)).rejects.toThrow(
         SlugNotUniqueException,
       );
@@ -113,16 +110,13 @@ describe('The ArticlesService', () => {
         categoryIds: [999],
       };
 
-      const fakeError = {
-        code: 'P2025',
-        message: 'some message',
-      };
-
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+      prismaService.article.create.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record to update not found', {
+          code: 'P2025',
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-      prismaService.article.create.mockRejectedValue(fakeError);
+
       await expect(articlesService.create(dto as any, 123)).rejects.toThrow(
         BadRequestException,
       );
@@ -187,15 +181,13 @@ describe('The ArticlesService', () => {
     });
     it('should throw NotFoundException if article does not exist', async () => {
       const articleId = 1;
-      const fakeError = {
-        code: PrismaError.RecordDoesNotExist,
-        message: 'Record does not exist',
-      };
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+
+      prismaService.article.delete.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record does not exist', {
+          code: PrismaError.RecordDoesNotExist,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-      prismaService.article.delete.mockRejectedValue(fakeError);
 
       await expect(articlesService.delete(articleId)).rejects.toThrow(
         NotFoundException,
@@ -221,17 +213,12 @@ describe('The ArticlesService', () => {
       expect(result).toBe(updated);
     });
     it('should throw ArticleNotFoundException if article not found', async () => {
-      const fakeError = {
-        code: PrismaError.RecordDoesNotExist,
-        message: 'Record does not exist',
-      };
-
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+      prismaService.article.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record does not exist', {
+          code: PrismaError.RecordDoesNotExist,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-
-      prismaService.article.update.mockRejectedValue(fakeError);
 
       await expect(articlesService.update(1, {} as any)).rejects.toThrow(
         ArticleNotFoundException,
@@ -240,17 +227,12 @@ describe('The ArticlesService', () => {
     it('should throw SlugNotUniqueException if urlSlug is not unique', async () => {
       const dto = { urlSlug: 'duplicate-slug' };
 
-      const fakeError = {
-        code: PrismaError.UniqueConstraintViolated,
-        message: 'Unique constraint',
-      };
-
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+      prismaService.article.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint', {
+          code: PrismaError.UniqueConstraintViolated,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-
-      prismaService.article.update.mockRejectedValue(fakeError);
 
       await expect(articlesService.update(1, dto as any)).rejects.toThrow(
         SlugNotUniqueException,

@@ -3,6 +3,7 @@ import { PrismaService } from '../database/prisma.service';
 import { NotFoundException } from '@nestjs/common';
 import { UserDto } from './user.dto';
 import { Prisma } from '@prisma/client';
+import { PrismaError } from '../database/prisma-error.enum';
 
 @Injectable()
 export class UsersService {
@@ -57,9 +58,12 @@ export class UsersService {
         },
       });
     } catch (error: unknown) {
-      const prismaError = error as Prisma.PrismaClientKnownRequestError;
-      if (prismaError.code === 'P2002') {
-        throw new ConflictException('User with this email already exists');
+      //const prismaError = error as Prisma.PrismaClientKnownRequestError;
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PrismaError.UniqueConstraintViolated
+      ) {
+        throw new ConflictException('User with that email already exists');
       }
       throw error;
     }

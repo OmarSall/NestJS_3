@@ -147,16 +147,13 @@ describe('The CategoriesService', () => {
 
     it('should throw NotFoundException when category does not exist (P2025)', async () => {
       const dto = { name: 'Whatever' };
-      const fakeError = {
-        code: PrismaError.RecordDoesNotExist,
-        message: 'Record to update not found',
-      };
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
-      );
 
-      prisma.category.update.mockRejectedValue(fakeError);
+      prisma.category.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record to update not found', {
+          code: PrismaError.RecordDoesNotExist,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
+      );
 
       await expect(service.update(123, dto)).rejects.toThrow(NotFoundException);
     });
@@ -174,16 +171,12 @@ describe('The CategoriesService', () => {
       expect(result).toBe(deleted);
     });
     it('should throw NotFoundException when category does not exist (P2025)', async () => {
-      const fakeError = {
-        code: PrismaError.RecordDoesNotExist,
-        message: 'Record to delete not found',
-      };
-      Object.setPrototypeOf(
-        fakeError,
-        Prisma.PrismaClientKnownRequestError.prototype,
+      prisma.category.delete.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Record to delete not found', {
+          code: PrismaError.RecordDoesNotExist,
+          clientVersion: Prisma.prismaVersion.client,
+        }),
       );
-
-      prisma.category.delete.mockRejectedValue(fakeError);
 
       await expect(service.delete(999)).rejects.toThrow(NotFoundException);
     });
