@@ -1,4 +1,8 @@
-import {BadRequestException, Injectable, NotFoundException} from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { hash, compare } from 'bcrypt';
@@ -7,7 +11,7 @@ import { LogInDto } from './dto/log-in.dto';
 import { TokenPayload } from './token-payload.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import {Prisma} from "@prisma/client";
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuthenticationService {
@@ -39,7 +43,7 @@ export class AuthenticationService {
 
   private async getUserByEmail(email: string) {
     try {
-      return this.usersService.getByEmail(email);
+      return await this.usersService.getByEmail(email);
     } catch (error) {
       if (error instanceof NotFoundException) {
         throw new WrongCredentialsException();
