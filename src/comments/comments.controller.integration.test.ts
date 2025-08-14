@@ -5,14 +5,14 @@ import {
 } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
-import { BooksController } from './books.controller';
-import { BooksService } from './books.service';
+import { CommentsController } from './comments.controller';
+import { CommentsService } from './comments.service';
 import { PrismaService } from '../database/prisma.service';
 import { JwtAuthenticationGuard } from '../authentication/jwt-authentication.guard';
 import { Prisma } from '@prisma/client';
 import { PrismaError } from '../database/prisma-error.enum';
 
-describe('Books Controller (HTTP integration', () => {
+describe('CommentsController (HTTP integration)', () => {
   let app: INestApplication;
 
   const findManyMock = jest.fn();
@@ -31,13 +31,13 @@ describe('Books Controller (HTTP integration', () => {
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      controllers: [BooksController],
+      controllers: [CommentsController],
       providers: [
-        BooksService,
+        CommentsService,
         {
           provide: PrismaService,
           useValue: {
-            book: {
+            comment: {
               findMany: findManyMock,
               findUnique: findUniqueMock,
               create: createMock,
@@ -63,7 +63,6 @@ describe('Books Controller (HTTP integration', () => {
     );
     await app.init();
   });
-
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -71,158 +70,121 @@ describe('Books Controller (HTTP integration', () => {
   afterAll(async () => {
     await app.close();
   });
-  describe('when the GET /books endpoint is called', () => {
-    it('responds 200 with a list of books including authors', async () => {
-      const books = [
-        {
-          id: 1,
-          title: 'Clean Code',
-          authors: [{ id: 10, name: 'Robert C. Martin' }],
-        },
-        {
-          id: 2,
-          title: 'The Pragmatic Programmer',
-          authors: [{ id: 11, name: 'Andrew Hunt' }],
-        },
+
+  describe('when GET /comments endpoint is called', () => {
+    it('responds 200 with a list of comments', async () => {
+      const comments = [
+        { id: 1, content: 'Nice article!', articleId: 10 },
+        { id: 2, content: 'I disagree', articleId: 10 },
       ];
-      findManyMock.mockResolvedValueOnce(books);
+      findManyMock.mockResolvedValueOnce(comments);
 
       await request(app.getHttpServer())
-        .get('/books')
+        .get('/comments')
         .expect(200)
-        .expect(books);
+        .expect(comments);
 
       expect(findManyMock).toHaveBeenCalledTimes(1);
     });
   });
-  describe('when the GET /books/:id endpoint is called', () => {
-    it('responds 200 with a single book when it exists', async () => {
-      const book = {
-        id: 7,
-        title: 'Refactoring',
-        authors: [{ id: 12, name: 'Martin Fowler' }],
-      };
+  describe('when GET /comments/:id endpoint is called', () => {
+    it('responds 200 with a single comment when it exists', async () => {
+      const comment = { id: 7, content: 'Refactoring is great', articleId: 12 };
       findUniqueMock.mockImplementation(({ where: { id } }: any) =>
-        id === 7 ? Promise.resolve(book) : Promise.resolve(null),
+        id === 7 ? Promise.resolve(comment) : Promise.resolve(null),
       );
 
       await request(app.getHttpServer())
-        .get('/books/7')
+        .get('/comments/7')
         .expect(200)
-        .expect(book);
+        .expect(comment);
 
       expect(findUniqueMock).toHaveBeenCalledTimes(1);
     });
-
-    it('responds 404 when the book does not exist', async () => {
+    it('responds 404 when the comment does not exist', async () => {
       findUniqueMock.mockResolvedValueOnce(null);
 
-      await request(app.getHttpServer()).get('/books/999').expect(404);
+      await request(app.getHttpServer()).get('/comments/999').expect(404);
     });
-
     it('responds 400 when id is not a number (ParseIntPipe)', async () => {
-      await request(app.getHttpServer()).get('/books/abc').expect(400);
+      await request(app.getHttpServer()).get('/comments/abc').expect(400);
     });
   });
-  describe('when the POST /books endpoint is called', () => {
-    it('responds 201 with the created book when payload is valid', async () => {
-      const payload = { title: 'New Book', authorIds: [10, 11] };
-      const created = {
-        id: 101,
-        title: payload.title,
-        authors: [
-          { id: 10, name: 'A' },
-          { id: 11, name: 'B' },
-        ],
-      };
+  describe('when POST /comments endpoint is called', () => {
+    it('responds 201 with the created comment when payload is valid', async () => {
+      const payload = { content: 'Great!', articleId: 10 };
+      const created = { ...payload, id: 101 };
       createMock.mockResolvedValueOnce(created);
 
       await request(app.getHttpServer())
-        .post('/books')
+        .post('/comments')
         .send(payload)
         .expect(201)
         .expect(created);
 
       expect(createMock).toHaveBeenCalledTimes(1);
+      expect(createMock).toHaveBeenCalledWith({ data: payload });
     });
-
-    it('responds 400 when payload fails validation (missing title)', async () => {
+    it('responds 400 when payload fails validation (missing content)', async () => {
       await request(app.getHttpServer())
-        .post('/books')
-        .send({ authorIds: [1, 2] })
+        .post('/comments')
+        .send({ articleId: 10 })
         .expect(400);
     });
-
-    it('responds 400 when payload has wrong types (title not a string)', async () => {
+    it('responds 400 when articleId is not a number', async () => {
       await request(app.getHttpServer())
-        .post('/books')
-        .send({ title: 123 })
+        .post('/comments')
+        .send({ content: 'Ok', articleId: '10' })
         .expect(400);
     });
-
-    it('responds 400 when payload has non-numeric authorIds', async () => {
+    it('responds 400 when content has wrong type', async () => {
       await request(app.getHttpServer())
-        .post('/books')
-        .send({ title: 'Book', authorIds: ['x', 2] })
+        .post('/comments')
+        .send({ content: 123, articleId: 10 })
         .expect(400);
     });
-
     it('responds 400 when payload has extra fields (forbidNonWhitelisted)', async () => {
       await request(app.getHttpServer())
-        .post('/books')
-        .send({ title: 'Book', extra: 'nope' })
-        .expect(400);
-    });
-
-    it('responds 400 when Prisma reports RecordDoesNotExist for authorIds', async () => {
-      createMock.mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError('Record not found', {
-          code: PrismaError.RecordDoesNotExist,
-          clientVersion: Prisma.prismaVersion.client,
-        }),
-      );
-
-      await request(app.getHttpServer())
-        .post('/books')
-        .send({ title: 'Book', authorIds: [999] })
+        .post('/comments')
+        .send({ content: 'Ok', articleId: 10, extra: 'nope' })
         .expect(400);
     });
   });
-  describe('when PATCH /books/:id endpoint is called', () => {
-    it('responds 200 with the updated book when payload is valid', async () => {
-      const updated = { id: 5, title: 'Updated Title', authors: [] };
+  describe('when PATCH /comments/:id endpoint is called', () => {
+    it('responds 200 with the updated comment when payload is valid', async () => {
+      const updated = { id: 5, content: 'Updated text', articleId: 10 };
       updateMock.mockResolvedValueOnce(updated);
 
       await request(app.getHttpServer())
-        .patch('/books/5')
-        .send({ title: 'Updated Title' })
+        .patch('/comments/5')
+        .send({ content: 'Updated text' })
         .expect(200)
         .expect(updated);
 
       expect(updateMock).toHaveBeenCalledTimes(1);
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: 5 },
+        data: { content: 'Updated text' },
+      });
     });
-
     it('responds 400 when id is not a number', async () => {
       await request(app.getHttpServer())
-        .patch('/books/xyz')
-        .send({ title: 'T' })
+        .patch('/comments/xyz')
+        .send({ content: 'x' })
         .expect(400);
     });
-
-    it('responds 400 when payload has wrong type (title not a string)', async () => {
+    it('responds 400 when payload has wrong type (content not a string)', async () => {
       await request(app.getHttpServer())
-        .patch('/books/5')
-        .send({ title: 123 })
+        .patch('/comments/5')
+        .send({ content: 123 })
         .expect(400);
     });
-
     it('responds 400 when payload has extra fields (forbidNonWhitelisted)', async () => {
       await request(app.getHttpServer())
-        .patch('/books/5')
-        .send({ title: 'Ok', extra: 'nope' })
+        .patch('/comments/5')
+        .send({ content: 'Ok', extra: 'nope' })
         .expect(400);
     });
-
     it('responds 404 when Prisma reports RecordDoesNotExist on update', async () => {
       updateMock.mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError('Record not found', {
@@ -230,25 +192,23 @@ describe('Books Controller (HTTP integration', () => {
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await request(app.getHttpServer())
-        .patch('/books/5')
-        .send({ title: 'Anything' })
+        .patch('/comments/999')
+        .send({ content: 'Anything' })
         .expect(404);
     });
   });
-  describe('when DELETE /books/:id endpoint is called', () => {
-    it('responds 200 on successful deletion (no body)', async () => {
+  describe('when DELETE /comments/:id endpoint is called', () => {
+    it('responds 200 on successful deletion (empty body)', async () => {
       deleteMock.mockResolvedValueOnce({ id: 1 });
-      await request(app.getHttpServer()).delete('/books/1').expect(200);
+      await request(app.getHttpServer()).delete('/comments/1').expect(200);
 
       expect(deleteMock).toHaveBeenCalledTimes(1);
+      expect(deleteMock).toHaveBeenCalledWith({ where: { id: 1 } });
     });
-
     it('responds 400 when id is not a number', async () => {
-      await request(app.getHttpServer()).delete('/books/abc').expect(400);
+      await request(app.getHttpServer()).delete('/comments/abc').expect(400);
     });
-
     it('responds 404 when Prisma reports RecordDoesNotExist on delete', async () => {
       deleteMock.mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError('Record not found', {
@@ -256,8 +216,7 @@ describe('Books Controller (HTTP integration', () => {
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
-      await request(app.getHttpServer()).delete('/books/999').expect(404);
+      await request(app.getHttpServer()).delete('/comments/999').expect(404);
     });
   });
 });
