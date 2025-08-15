@@ -6,12 +6,13 @@ import {
   Param,
   ParseIntPipe,
   Patch,
-  Post, UseGuards,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import {JwtAuthenticationGuard} from "../authentication/jwt-authentication.guard";
+import { JwtAuthenticationGuard } from '../authentication/jwt-authentication.guard';
 
 @Controller('comments')
 export class CommentsController {

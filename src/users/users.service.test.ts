@@ -1,9 +1,9 @@
 import { PrismaService } from '../database/prisma.service';
-import { UsersService } from '../users/users.service';
+import { UsersService } from './users.service';
 import { Test } from '@nestjs/testing';
 import { User, Prisma } from '@prisma/client';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { UserDto } from '../users/user.dto';
+import { UserDto } from './user.dto';
 import { PrismaError } from '../database/prisma-error.enum';
 
 describe('The UsersService', () => {

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUrl } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsUrl } from 'class-validator';
 
 export class CreateProfileImageDto {
   @IsString()
@@ -6,6 +6,7 @@ export class CreateProfileImageDto {
   @IsNotEmpty()
   url: string;
 
+  @IsInt()
   @IsNotEmpty()
   userId: number;
 }

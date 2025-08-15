@@ -58,7 +58,6 @@ export class UsersService {
         },
       });
     } catch (error: unknown) {
-      //const prismaError = error as Prisma.PrismaClientKnownRequestError;
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === PrismaError.UniqueConstraintViolated
@@ -70,10 +69,20 @@ export class UsersService {
   }
 
   async updatePhoneNumber(userId: number, phoneNumber: string) {
-    return this.prismaService.user.update({
-      where: { id: userId },
-      data: { phoneNumber },
-    });
+    try {
+      return await this.prismaService.user.update({
+        where: { id: userId },
+        data: { phoneNumber },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code == PrismaError.RecordDoesNotExist
+      ) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+      throw error;
+    }
   }
 
   deleteMultipleArticles(ids: number[]) {
@@ -87,28 +96,27 @@ export class UsersService {
   }
 
   async deleteUserAndHandleArticles(userId: number, newAuthorId?: number) {
-    return this.prismaService.$transaction(async (prismaClient) => {
-      if (newAuthorId) {
-        await prismaClient.article.updateMany({
-          where: {
-            authorId: userId,
-          },
-          data: {
-            authorId: newAuthorId,
-          },
-        });
-      } else {
-        await prismaClient.article.deleteMany({
-          where: {
-            authorId: userId,
-          },
-        });
-      }
-      return prismaClient.user.delete({
-        where: {
-          id: userId,
-        },
+    try {
+      return await this.prismaService.$transaction(async (prisma) => {
+        if (newAuthorId) {
+          await prisma.article.updateMany({
+            where: { authorId: userId },
+            data: { authorId: newAuthorId },
+          });
+        } else {
+          await prisma.article.deleteMany({
+            where: { authorId: userId },
+          });
+        }
+        return prisma.user.delete({ where: { id: userId } });
       });
-    });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code == PrismaError.RecordDoesNotExist) {
+          throw new NotFoundException(`User with ID ${userId} not found`);
+        }
+      }
+      throw error;
+    }
   }
 }
