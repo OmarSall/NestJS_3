@@ -194,7 +194,7 @@ describe('UsersController (HTTP integration)', () => {
       expect(transactionMock).toHaveBeenCalledTimes(1);
     });
 
-    it('responds 400 when newAuthor is not a number (ParseIntPipe on query)', async () => {
+    it('responds 400 when newAuthorId is not a number (ParseIntPipe on query)', async () => {
       await request(app.getHttpServer())
         .delete('/users')
         .query({ newAuthorId: 'abc' })
