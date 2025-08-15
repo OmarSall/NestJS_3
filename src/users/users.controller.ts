@@ -32,7 +32,8 @@ export class UsersController {
   @UseGuards(JwtAuthenticationGuard)
   deleteSelf(
     @Req() request: RequestWithUser,
-    @Query('newAuthor', ParseIntPipe) newAuthorId?: number,
+    @Query('newAuthorId', new ParseIntPipe({ optional: true }))
+    newAuthorId?: number,
   ) {
     return this.usersService.deleteUserAndHandleArticles(
       request.user.id,
