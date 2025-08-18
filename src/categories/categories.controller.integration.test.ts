@@ -7,21 +7,16 @@ import {
   INestApplication,
   ValidationPipe,
 } from '@nestjs/common';
-import { Category, Prisma } from '@prisma/client';
+import { Category } from '@prisma/client';
 import * as request from 'supertest';
 import { JwtAuthenticationGuard } from '../authentication/jwt-authentication.guard';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { ArticlesService } from '../articles/articles.service';
-import { PrismaError } from '../database/prisma-error.enum';
 
 let findUniqueMock: jest.Mock;
 let createMock: jest.Mock;
 
-const articlesServiceMock: Partial<ArticlesService> = {
-  // If later you test DELETE/merge endpoints, add methods here, e.g.:
-  // deleteCategoryWithArticles: jest.fn(),
-  // mergeCategories: jest.fn(),
-};
+const articlesServiceMock: Partial<ArticlesService> = {};
 
 describe('The CategoriesController', () => {
   let app: INestApplication;

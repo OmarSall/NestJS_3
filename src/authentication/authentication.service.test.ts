@@ -141,7 +141,7 @@ describe('The AuthenticationService', () => {
           name: testUserDto.name,
           phoneNumber: testUserDto.phoneNumber,
           address: testUserDto.address,
-          password: expect.any(String) as string,
+          password: expect.any(String),
         }),
       );
       const passedPassword = (
