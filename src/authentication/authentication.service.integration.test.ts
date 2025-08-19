@@ -19,7 +19,6 @@ let prismaCreateMock: jest.Mock;
 
 describe('The AuthenticationService (integration)', () => {
   let authenticationService: AuthenticationService;
-
   let signUpData: SignUpDto;
   beforeEach(async () => {
     prismaCreateMock = jest.fn();
@@ -49,7 +48,6 @@ describe('The AuthenticationService (integration)', () => {
         }),
       ],
     }).compile();
-
     authenticationService = await module.get(AuthenticationService);
   });
   describe('when the signUp function is called', () => {
@@ -99,14 +97,12 @@ describe('The AuthenticationService (integration)', () => {
           await authenticationService.signUp(signUpData);
         }).rejects.toThrow(ConflictException);
       });
-
       it('re-throws unknown Prisma errors (no swallowing)', async () => {
         const unknown = new Prisma.PrismaClientKnownRequestError('Unknown', {
           code: 'SOME_OTHER_CODE' as any,
           clientVersion: Prisma.prismaVersion.client,
         });
         prismaCreateMock.mockRejectedValueOnce(unknown);
-
         await expect(authenticationService.signUp(signUpData)).rejects.toThrow(
           unknown,
         );

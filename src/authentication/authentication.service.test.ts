@@ -22,11 +22,9 @@ describe('The AuthenticationService', () => {
   beforeEach(async () => {
     getByEmailMock = jest.fn();
     createMock = jest.fn<unknown, [SignUpDto]>();
-
     jwtService = {
       sign: jest.fn().mockReturnValue('mocked-jwt-token'),
     } as unknown as JwtService;
-
     configService = {
       get: jest.fn((key: string) => {
         if (key === 'JWT_EXPIRES') return '3600';
@@ -34,7 +32,6 @@ describe('The AuthenticationService', () => {
         return null;
       }),
     } as unknown as ConfigService;
-
     password = 'strongPassword123';
     const hashedPassword = await hash(password, 10);
     userData = {
@@ -73,22 +70,17 @@ describe('The AuthenticationService', () => {
         DatabaseModule,
       ],
     }).compile();
-
     authenticationService = await module.get(AuthenticationService);
   });
   describe('when the getCookieForLogOut method is called', () => {
     it('should return a cookie with an empty Authentication token', () => {
       const cookie = authenticationService.getCookieForLogOut();
-
       const containsAuthenticationToken = cookie.includes('Authentication=;');
-
       expect(containsAuthenticationToken).toBe(true);
     });
     it('should return a cookie marked with HttpOnly', () => {
       const cookie = authenticationService.getCookieForLogOut();
-
       const containsHttpOnly = cookie.includes('HttpOnly;');
-
       expect(containsHttpOnly).toBe(true);
     });
   });
@@ -132,9 +124,7 @@ describe('The AuthenticationService', () => {
           country: 'Country',
         },
       };
-
       await authenticationService.signUp(testUserDto);
-
       expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
           email: testUserDto.email,
@@ -153,7 +143,6 @@ describe('The AuthenticationService', () => {
   describe('when getCookieWithJwtToken is  called', () => {
     it('should return a properly formatted cookie with the JWT token', () => {
       const userId = 42;
-
       const result = authenticationService.getCookieWithJwtToken(userId);
       expect(jwtService.sign).toHaveBeenCalledWith(
         { userId },
@@ -162,7 +151,6 @@ describe('The AuthenticationService', () => {
           expiresIn: 3600,
         },
       );
-
       expect(result).toBe(
         'Authentication=mocked-jwt-token; HttpOnly; Path=/; Max-Age=3600',
       );

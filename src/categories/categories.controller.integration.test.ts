@@ -15,7 +15,6 @@ import { ArticlesService } from '../articles/articles.service';
 
 let findUniqueMock: jest.Mock;
 let createMock: jest.Mock;
-
 const articlesServiceMock: Partial<ArticlesService> = {};
 
 describe('The CategoriesController', () => {
@@ -40,7 +39,6 @@ describe('The CategoriesController', () => {
           useValue: articlesServiceMock,
         },
       ],
-
       controllers: [CategoriesController],
       imports: [],
     })
@@ -56,7 +54,6 @@ describe('The CategoriesController', () => {
         },
       })
       .compile();
-
     app = module.createNestApplication();
     app.useGlobalPipes(
       new ValidationPipe({
@@ -70,7 +67,6 @@ describe('The CategoriesController', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
   afterAll(async () => {
     await app.close();
   });

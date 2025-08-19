@@ -21,7 +21,6 @@ describe('The ArticlesService', () => {
       findUnique: jest.Mock;
     };
   };
-
   beforeEach(async () => {
     prismaService = {
       $transaction: jest.fn(),
@@ -35,7 +34,6 @@ describe('The ArticlesService', () => {
         findUnique: jest.fn(),
       },
     };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ArticlesService,
@@ -55,7 +53,6 @@ describe('The ArticlesService', () => {
         urlSlug: 'test-title',
         categoryIds: [1, 2],
       };
-
       const expectedArticle = {
         ...dto,
         id: 1,
@@ -64,11 +61,8 @@ describe('The ArticlesService', () => {
           id: 123,
         },
       };
-
       prismaService.article.create.mockResolvedValue(expectedArticle);
-
       const result = await articlesService.create(dto as any, 123);
-
       expect(prismaService.article.create).toHaveBeenCalledWith({
         data: {
           title: dto.title,
@@ -79,29 +73,24 @@ describe('The ArticlesService', () => {
         },
         include: { categories: true },
       });
-
       expect(result).toBe(expectedArticle);
     });
-
     it('should throw SlugNotUniqueException if urlSlug is not unique', async () => {
       const dto = {
         title: 'Title',
         text: 'Content',
         urlSlug: 'duplicate-slug',
       };
-
       prismaService.article.create.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
           code: PrismaError.UniqueConstraintViolated,
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(articlesService.create(dto as any, 123)).rejects.toThrow(
         SlugNotUniqueException,
       );
     });
-
     it('should throw BadRequestException if category does not exist', async () => {
       const dto = {
         title: 'Title',
@@ -109,14 +98,12 @@ describe('The ArticlesService', () => {
         urlSlug: 'valid-slug',
         categoryIds: [999],
       };
-
       prismaService.article.create.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('Record to update not found', {
           code: 'P2025',
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(articlesService.create(dto as any, 123)).rejects.toThrow(
         BadRequestException,
       );
@@ -125,11 +112,8 @@ describe('The ArticlesService', () => {
   describe('when the getAll method is called', () => {
     it('should return all articles', async () => {
       const articles = [{ id: 1 }, { id: 2 }];
-
       prismaService.article.findMany.mockResolvedValue(articles);
-
       const result = await articlesService.getAll();
-
       expect(prismaService.article.findMany).toHaveBeenCalledWith();
       expect(result).toBe(articles);
     });
@@ -142,21 +126,16 @@ describe('The ArticlesService', () => {
         author: {},
         categories: [],
       };
-
       prismaService.article.findUnique.mockResolvedValue(article);
-
       const result = await articlesService.getById(1);
-
       expect(prismaService.article.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
         include: { author: true, categories: true },
       });
-
       expect(result).toBe(article);
     });
     it('should throw ArticleNotFoundException if not found', async () => {
       prismaService.article.findUnique.mockResolvedValue(null);
-
       await expect(articlesService.getById(999)).rejects.toThrow(
         ArticleNotFoundException,
       );
@@ -169,9 +148,7 @@ describe('The ArticlesService', () => {
         id: articleId,
       };
       prismaService.article.delete.mockResolvedValue(deletedArticle);
-
       const result = await articlesService.delete(articleId);
-
       expect(prismaService.article.delete).toHaveBeenCalledWith({
         where: {
           id: articleId,
@@ -181,14 +158,12 @@ describe('The ArticlesService', () => {
     });
     it('should throw NotFoundException if article does not exist', async () => {
       const articleId = 1;
-
       prismaService.article.delete.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('Record does not exist', {
           code: PrismaError.RecordDoesNotExist,
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(articlesService.delete(articleId)).rejects.toThrow(
         NotFoundException,
       );
@@ -202,14 +177,11 @@ describe('The ArticlesService', () => {
       };
       const updated = { id: 1, ...dto };
       prismaService.article.update.mockResolvedValue(updated);
-
       const result = await articlesService.update(1, dto as any);
-
       expect(prismaService.article.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { ...dto, id: undefined },
       });
-
       expect(result).toBe(updated);
     });
     it('should throw ArticleNotFoundException if article not found', async () => {
@@ -219,21 +191,18 @@ describe('The ArticlesService', () => {
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(articlesService.update(1, {} as any)).rejects.toThrow(
         ArticleNotFoundException,
       );
     });
     it('should throw SlugNotUniqueException if urlSlug is not unique', async () => {
       const dto = { urlSlug: 'duplicate-slug' };
-
       prismaService.article.update.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('Unique constraint', {
           code: PrismaError.UniqueConstraintViolated,
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(articlesService.update(1, dto as any)).rejects.toThrow(
         SlugNotUniqueException,
       );
@@ -244,13 +213,10 @@ describe('The ArticlesService', () => {
       prismaService.$transaction.mockImplementation(async (callback) => {
         return await callback(prismaService);
       });
-
       prismaService.article.deleteMany.mockResolvedValue({ count: 3 });
-
       await expect(
         articlesService.deleteMultipleArticles([1, 2, 3]),
       ).resolves.toBeUndefined();
-
       expect(prismaService.article.deleteMany).toHaveBeenCalledWith({
         where: { id: { in: [1, 2, 3] } },
       });
@@ -259,9 +225,7 @@ describe('The ArticlesService', () => {
       prismaService.$transaction.mockImplementation(async (callback) => {
         return await callback(prismaService);
       });
-
       prismaService.article.deleteMany.mockResolvedValue({ count: 2 });
-
       await expect(
         articlesService.deleteMultipleArticles([1, 2, 3]),
       ).rejects.toThrow(NotFoundException);
@@ -274,14 +238,11 @@ describe('The ArticlesService', () => {
         upvotes: 6,
       };
       prismaService.article.update.mockResolvedValue(updatedArticle);
-
       const result = await articlesService.upvote(1);
-
       expect(prismaService.article.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: { upvotes: { increment: 1 } },
       });
-
       expect(result).toBe(updatedArticle);
     });
   });
@@ -292,9 +253,7 @@ describe('The ArticlesService', () => {
         upvotes: 4,
       };
       prismaService.article.update.mockResolvedValue(updatedArticle);
-
       const result = await articlesService.downvote(1);
-
       expect(prismaService.article.update).toHaveBeenCalledWith({
         where: {
           id: 1,
@@ -302,19 +261,16 @@ describe('The ArticlesService', () => {
             gt: 0,
           },
         },
-
         data: {
           upvotes: {
             decrement: 1,
           },
         },
       });
-
       expect(result).toBe(updatedArticle);
     });
     it('should throw BadRequestException if update fails', async () => {
       prismaService.article.update.mockRejectedValue(new Error('DB error'));
-
       await expect(articlesService.downvote(1)).rejects.toThrow(
         BadRequestException,
       );
@@ -324,16 +280,13 @@ describe('The ArticlesService', () => {
     it('should delete all articles with upvotes below threshold', async () => {
       const threshold = 5;
       const articles = [{ id: 1 }, { id: 2 }];
-
       prismaService.$transaction.mockImplementation(async (callback) => {
         prismaService.article.findMany.mockResolvedValue(articles);
         prismaService.article.deleteMany.mockResolvedValue({ count: 2 });
         return await callback(prismaService);
       });
-
       const result =
         await articlesService.deleteArticlesWithLowUpVotes(threshold);
-
       expect(prismaService.article.findMany).toHaveBeenCalledWith({
         where: {
           upvotes: {
@@ -341,7 +294,6 @@ describe('The ArticlesService', () => {
           },
         },
       });
-
       expect(prismaService.article.deleteMany).toHaveBeenCalledWith({
         where: {
           id: {
@@ -349,7 +301,6 @@ describe('The ArticlesService', () => {
           },
         },
       });
-
       expect(result).toEqual({ deletedCount: 2 });
     });
     it('should throw BadRequestException if no articles found', async () => {
@@ -357,7 +308,6 @@ describe('The ArticlesService', () => {
         prismaService.article.findMany.mockResolvedValue([]);
         return await callback(prismaService);
       });
-
       await expect(
         articlesService.deleteArticlesWithLowUpVotes(5),
       ).rejects.toThrow(BadRequestException);
@@ -367,16 +317,12 @@ describe('The ArticlesService', () => {
     describe('reassignArticles', () => {
       it('should update authorId for multiple articles', async () => {
         const response = { count: 3 };
-
         prismaService.article.updateMany.mockResolvedValue(response);
-
         const result = await articlesService.reassignArticles(10, 20);
-
         expect(prismaService.article.updateMany).toHaveBeenCalledWith({
           where: { authorId: 10 },
           data: { authorId: 20 },
         });
-
         expect(result).toBe(response);
       });
     });

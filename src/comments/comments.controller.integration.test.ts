@@ -14,13 +14,11 @@ import { PrismaError } from '../database/prisma-error.enum';
 
 describe('CommentsController (HTTP integration)', () => {
   let app: INestApplication;
-
   const findManyMock = jest.fn();
   const findUniqueMock = jest.fn();
   const createMock = jest.fn();
   const updateMock = jest.fn();
   const deleteMock = jest.fn();
-
   const mockAuthGuard = {
     canActivate: (context: ExecutionContext) => {
       const req = context.switchToHttp().getRequest();
@@ -28,7 +26,6 @@ describe('CommentsController (HTTP integration)', () => {
       return true;
     },
   };
-
   beforeAll(async () => {
     const module = await Test.createTestingModule({
       controllers: [CommentsController],
@@ -51,9 +48,7 @@ describe('CommentsController (HTTP integration)', () => {
       .overrideGuard(JwtAuthenticationGuard)
       .useValue(mockAuthGuard)
       .compile();
-
     app = module.createNestApplication();
-
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -66,11 +61,9 @@ describe('CommentsController (HTTP integration)', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-
   afterAll(async () => {
     await app.close();
   });
-
   describe('when GET /comments endpoint is called', () => {
     it('responds 200 with a list of comments', async () => {
       const comments = [
@@ -78,12 +71,10 @@ describe('CommentsController (HTTP integration)', () => {
         { id: 2, content: 'I disagree', articleId: 10 },
       ];
       findManyMock.mockResolvedValueOnce(comments);
-
       await request(app.getHttpServer())
         .get('/comments')
         .expect(200)
         .expect(comments);
-
       expect(findManyMock).toHaveBeenCalledTimes(1);
     });
   });
@@ -93,12 +84,10 @@ describe('CommentsController (HTTP integration)', () => {
       findUniqueMock.mockImplementation(({ where: { id } }: any) =>
         id === 7 ? Promise.resolve(comment) : Promise.resolve(null),
       );
-
       await request(app.getHttpServer())
         .get('/comments/7')
         .expect(200)
         .expect(comment);
-
       expect(findUniqueMock).toHaveBeenCalledTimes(1);
     });
     it('responds 404 when the comment does not exist', async () => {
@@ -121,7 +110,6 @@ describe('CommentsController (HTTP integration)', () => {
         .send(payload)
         .expect(201)
         .expect(created);
-
       expect(createMock).toHaveBeenCalledTimes(1);
       expect(createMock).toHaveBeenCalledWith({ data: payload });
     });
@@ -154,13 +142,11 @@ describe('CommentsController (HTTP integration)', () => {
     it('responds 200 with the updated comment when payload is valid', async () => {
       const updated = { id: 5, content: 'Updated text', articleId: 10 };
       updateMock.mockResolvedValueOnce(updated);
-
       await request(app.getHttpServer())
         .patch('/comments/5')
         .send({ content: 'Updated text' })
         .expect(200)
         .expect(updated);
-
       expect(updateMock).toHaveBeenCalledTimes(1);
       expect(updateMock).toHaveBeenCalledWith({
         where: { id: 5 },
@@ -202,7 +188,6 @@ describe('CommentsController (HTTP integration)', () => {
     it('responds 200 on successful deletion (empty body)', async () => {
       deleteMock.mockResolvedValueOnce({ id: 1 });
       await request(app.getHttpServer()).delete('/comments/1').expect(200);
-
       expect(deleteMock).toHaveBeenCalledTimes(1);
       expect(deleteMock).toHaveBeenCalledWith({ where: { id: 1 } });
     });

@@ -27,7 +27,6 @@ describe('The UsersService', () => {
         },
       ],
     }).compile();
-
     usersService = await module.get(UsersService);
   });
   describe('when the getById function is called', () => {
@@ -135,7 +134,6 @@ describe('The UsersService', () => {
       });
       it('should throw the NotFoundException', async () => {
         const email = 'nonexistent@example.com';
-
         await expect(usersService.getByEmail(email)).rejects.toThrow(
           NotFoundException,
         );
