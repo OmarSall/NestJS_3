@@ -1,3 +1,9 @@
+jest.mock('bcrypt', () => ({
+  hash: () => {
+    return Promise.resolve('hashed-password');
+  },
+}));
+
 import { AuthenticationService } from './authentication.service';
 import { Test } from '@nestjs/testing';
 import { UsersService } from '../users/users.service';
@@ -9,15 +15,10 @@ import { Prisma, User } from '@prisma/client';
 import { PrismaError } from '../database/prisma-error.enum';
 import { ConflictException } from '@nestjs/common';
 
-jest.mock('bcrypt', () => ({
-  hash: () => {
-    return Promise.resolve('hashed-password');
-  },
-}));
+let prismaCreateMock: jest.Mock;
 
-describe('The AuthenticationService', () => {
+describe('The AuthenticationService (integration)', () => {
   let authenticationService: AuthenticationService;
-  let prismaCreateMock: jest.Mock;
   let signUpData: SignUpDto;
   beforeEach(async () => {
     prismaCreateMock = jest.fn();
@@ -41,13 +42,12 @@ describe('The AuthenticationService', () => {
         },
       ],
       imports: [
-        ConfigModule.forRoot(),
+        ConfigModule.forRoot({ isGlobal: true }),
         JwtModule.register({
           secretOrPrivateKey: 'Secret key',
         }),
       ],
     }).compile();
-
     authenticationService = await module.get(AuthenticationService);
   });
   describe('when the signUp function is called', () => {
@@ -96,6 +96,16 @@ describe('The AuthenticationService', () => {
         return expect(async () => {
           await authenticationService.signUp(signUpData);
         }).rejects.toThrow(ConflictException);
+      });
+      it('re-throws unknown Prisma errors (no swallowing)', async () => {
+        const unknown = new Prisma.PrismaClientKnownRequestError('Unknown', {
+          code: 'SOME_OTHER_CODE' as any,
+          clientVersion: Prisma.prismaVersion.client,
+        });
+        prismaCreateMock.mockRejectedValueOnce(unknown);
+        await expect(authenticationService.signUp(signUpData)).rejects.toThrow(
+          unknown,
+        );
       });
     });
   });

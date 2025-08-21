@@ -24,7 +24,6 @@ describe('The CategoriesService', () => {
     };
     $transaction: jest.Mock;
   };
-
   beforeEach(async () => {
     prisma = {
       category: {
@@ -55,7 +54,6 @@ describe('The CategoriesService', () => {
         },
       ],
     }).compile();
-
     service = module.get(CategoriesService);
   });
   describe('when getAll method is called', () => {
@@ -71,9 +69,7 @@ describe('The CategoriesService', () => {
         },
       ];
       prisma.category.findMany.mockResolvedValue(rows);
-
       const result = await service.getAll();
-
       expect(prisma.category.findMany).toHaveBeenCalled();
       expect(result).toBe(rows);
     });
@@ -86,9 +82,7 @@ describe('The CategoriesService', () => {
         articles: [],
       };
       prisma.category.findUnique.mockResolvedValue(category);
-
       const result = await service.getById(10);
-
       expect(prisma.category.findUnique).toHaveBeenCalledWith({
         where: {
           id: 10,
@@ -99,10 +93,8 @@ describe('The CategoriesService', () => {
       });
       expect(result).toBe(category);
     });
-
     it('should throw NotFoundException when category not found', async () => {
       prisma.category.findUnique.mockResolvedValue(null);
-
       await expect(service.getById(999)).rejects.toThrow(NotFoundException);
     });
   });
@@ -116,9 +108,7 @@ describe('The CategoriesService', () => {
         name: 'Science',
       };
       prisma.category.create.mockResolvedValue(created);
-
       const result = await service.create(dto);
-
       expect(prisma.category.create).toHaveBeenCalledWith({
         data: { name: dto.name },
       });
@@ -135,26 +125,21 @@ describe('The CategoriesService', () => {
         name: dto.name,
       };
       prisma.category.update.mockResolvedValue(updated);
-
       const result = await service.update(1, dto);
-
       expect(prisma.category.update).toHaveBeenCalledWith({
         data: { name: dto.name },
         where: { id: 1 },
       });
       expect(result).toBe(updated);
     });
-
     it('should throw NotFoundException when category does not exist (P2025)', async () => {
       const dto = { name: 'Whatever' };
-
       prisma.category.update.mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError('Record to update not found', {
           code: PrismaError.RecordDoesNotExist,
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(service.update(123, dto)).rejects.toThrow(NotFoundException);
     });
   });
@@ -162,9 +147,7 @@ describe('The CategoriesService', () => {
     it('should delete category by id', async () => {
       const deleted = { id: 4, name: 'ToDelete' };
       prisma.category.delete.mockResolvedValue(deleted);
-
       const result = await service.delete(4);
-
       expect(prisma.category.delete).toHaveBeenCalledWith({
         where: { id: 4 },
       });
@@ -177,7 +160,6 @@ describe('The CategoriesService', () => {
           clientVersion: Prisma.prismaVersion.client,
         }),
       );
-
       await expect(service.delete(999)).rejects.toThrow(NotFoundException);
     });
   });
@@ -186,7 +168,6 @@ describe('The CategoriesService', () => {
       prisma.$transaction.mockImplementation(async (callback) =>
         callback(prisma),
       );
-
       const category = {
         id: 7,
         name: 'Old',
@@ -195,11 +176,9 @@ describe('The CategoriesService', () => {
       prisma.category.findUnique.mockResolvedValue(category);
       prisma.article.deleteMany.mockResolvedValue({ count: 2 });
       prisma.category.delete.mockResolvedValue({ id: 7, name: 'Old' });
-
       await expect(
         service.deleteCategoryWithArticles(7),
       ).resolves.toBeUndefined();
-
       expect(prisma.category.findUnique).toHaveBeenCalledWith({
         where: { id: 7 },
         include: { articles: true },
@@ -211,13 +190,11 @@ describe('The CategoriesService', () => {
         where: { id: 7 },
       });
     });
-
     it('should throw NotFoundException if category does not exist', async () => {
       prisma.$transaction.mockImplementation(async (callback) =>
         callback(prisma),
       );
       prisma.category.findUnique.mockResolvedValue(null);
-
       await expect(service.deleteCategoryWithArticles(999)).rejects.toThrow(
         NotFoundException,
       );
@@ -228,27 +205,21 @@ describe('The CategoriesService', () => {
       prisma.$transaction.mockImplementation(async (callback) =>
         callback(prisma),
       );
-
       prisma.category.findMany.mockResolvedValue([
         { id: 1, name: 'Tech' },
         { id: 2, name: 'Tech' },
         { id: 3, name: 'News' },
       ]);
-
       prisma.article.findMany.mockResolvedValue([
         { id: 201, title: 'Title A' },
         { id: 202, title: 'Title B' },
       ]);
-
       prisma.article.update.mockResolvedValue({});
       prisma.category.delete.mockResolvedValue({});
-
       await service.mergeCategories();
-
       expect(prisma.category.findMany).toHaveBeenCalledWith({
         orderBy: { id: 'asc' },
       });
-
       expect(prisma.article.findMany).toHaveBeenCalledWith({
         where: {
           categories: {
@@ -258,7 +229,6 @@ describe('The CategoriesService', () => {
           },
         },
       });
-
       expect(prisma.article.update).toHaveBeenCalledWith({
         where: {
           id: 201,
@@ -281,26 +251,21 @@ describe('The CategoriesService', () => {
           },
         },
       });
-
       expect(prisma.category.delete).toHaveBeenCalledWith({
         where: {
           id: 2,
         },
       });
     });
-
     it('should do nothing when there are no duplicates', async () => {
       prisma.$transaction.mockImplementation(async (callback) =>
         callback(prisma),
       );
-
       prisma.category.findMany.mockResolvedValue([
         { id: 1, name: 'Tech' },
         { id: 2, name: 'News' },
       ]);
-
       await service.mergeCategories();
-
       expect(prisma.article.findMany).not.toHaveBeenCalled();
       expect(prisma.article.update).not.toHaveBeenCalled();
       expect(prisma.category.delete).not.toHaveBeenCalled();

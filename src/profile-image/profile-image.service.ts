@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { CreateProfileImageDto } from './dto/create-profileImage.dto';
 import { UpdateProfileImageDto } from './dto/update-profileImage.dto';
+import { Prisma } from '@prisma/client';
+import { PrismaError } from '../database/prisma-error.enum';
 
 @Injectable()
 export class ProfileImageService {
@@ -31,15 +33,33 @@ export class ProfileImageService {
   }
 
   async update(id: number, data: UpdateProfileImageDto) {
-    return this.prismaService.profileImage.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prismaService.profileImage.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PrismaError.RecordDoesNotExist
+      ) {
+        throw new NotFoundException();
+      }
+      throw error;
+    }
   }
 
-  async remove(id: number) {
-    return this.prismaService.profileImage.delete({
-      where: { id },
-    });
+  async delete(id: number) {
+    try {
+      return await this.prismaService.profileImage.delete({ where: { id } });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === PrismaError.RecordDoesNotExist
+      ) {
+        throw new NotFoundException();
+      }
+      throw error;
+    }
   }
 }
